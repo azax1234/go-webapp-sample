@@ -24,7 +24,7 @@
             }
             stage(RUN){
                 steps{
-                    echo ${HOME}
+                    echo "${HOME}"
                     // sh 'cd /var/lib/jenkins/workspace/go_full_pipeline && go-webapp-sample &'
                 }
 
