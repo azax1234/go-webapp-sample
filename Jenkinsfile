@@ -26,7 +26,7 @@
                 steps{
                     echo "${HOME}"
                     echo "${WORKSPACE}"
-                    sh 'cd /var/lib/jenkins/workspace/go_full_pipeline && go-webapp-sample &'
+                    sh '${WORKSPACE}/go-webapp-sample &'
                 }
 
             }
