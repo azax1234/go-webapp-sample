@@ -13,8 +13,12 @@ steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-    echo My name is Azax
-  displayName: 'Run a multi-line script'
+- script: go build .
+  displayName: 'Build go app"
+  
+
+#- script: |
+ #   echo Add other tasks to build, test, and deploy your project.
+  #  echo See https://aka.ms/yaml
+   # echo My name is Azax
+  # displayName: 'Run a multi-line script'
