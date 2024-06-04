@@ -16,21 +16,152 @@ stages:
   - job: Build
     displayName: 'Build Go Web App'
     steps:
-    - task: UseGoTool@0
-      inputs:
-        version: '1.17.x' # Specify the Go version you need
+    - script: |
+        wget https://golang.org/dl/go1.17.6.linux-amd64.tar.gz
+        sudo tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        go version
+      displayName: 'Install Go'
 
     - script: |
         mkdir -p $(GOPATH)/src/github.com/azax1234
         cd $(GOPATH)/src/github.com/azax1234
         git clone https://github.com/azax1234/go-webapp-sample
         cd go-webapp-sample
-        go build -o go-webapp-sample
+        /usr/local/go/bin/go build -o go-webapp-sample
         mkdir -p $(Build.ArtifactStagingDirectory)
         cp go-webapp-sample $(Build.ArtifactStagingDirectory)
-        echo "display the working dir: $(Build.ArtifactStagingDirectory)""
       displayName: 'Build Go App'
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: go-webapp-sample
       displayName: 'Publish Artifact'
+
+# - stage: Provision
+#   displayName: 'Provision Infrastructure'
+#   jobs:
+#   - job: CopyTerraformFiles
+#     displayName: 'Create and Copy Terraform Files'
+#     steps:
+#     - checkout: self
+
+#     - script: |
+#         mkdir -p $(TERRAFORM_WORKING_DIRECTORY)
+#         echo 'provider "aws" {
+#   region = "us-west-2"
+# }
+
+# resource "aws_instance" "web" {
+#   ami           = "ami-0c55b159cbfafe1f0"
+#   instance_type = "t2.micro"
+
+#   tags = {
+#     Name = "GoWebAppInstance"
+#   }
+
+#   key_name      = "your-key-pair"
+
+#   provisioner "local-exec" {
+#     command = "echo ${aws_instance.web.public_ip} > ip_address.txt"
+#     working_dir = "${path.module}"
+#   }
+
+#   provisioner "file" {
+#     source      = "go-webapp-sample"
+#     destination = "/home/ubuntu/go-webapp-sample"
+#     connection {
+#       type        = "ssh"
+#       user        = "ubuntu"
+#       private_key = file(var.private_key_path)
+#       host        = self.public_ip
+#     }
+#   }
+
+#   provisioner "remote-exec" {
+#     inline = [
+#       "sudo apt-get update",
+#       "sudo apt-get install -y golang",
+#       "cd /home/ubuntu/go-webapp-sample",
+#       "./go-webapp-sample &"
+#     ]
+#     connection {
+#       type        = "ssh"
+#       user        = "ubuntu"
+#       private_key = file(var.private_key_path)
+#       host        = self.public_ip
+#     }
+#   }
+# }
+
+# output "instance_ip" {
+#   value = aws_instance.web.public_ip
+# }' > $(TERRAFORM_WORKING_DIRECTORY)/main.tf
+
+#         echo 'variable "private_key_path" {
+#   description = "Path to the private key file"
+#   type        = string
+# }
+
+# variable "aws_region" {
+#   description = "AWS Region"
+#   type        = string
+#   default     = "us-west-2"
+# }' > $(TERRAFORM_WORKING_DIRECTORY)/variables.tf
+
+#         echo 'private_key_path = "/path/to/your/private/key.pem"
+# aws_region       = "us-west-2"' > $(TERRAFORM_WORKING_DIRECTORY)/terraform.tfvars
+
+#         echo 'output "instance_ip" {
+#   description = "Public IP of the EC2 instance"
+#   value       = aws_instance.web.public_ip
+# }' > $(TERRAFORM_WORKING_DIRECTORY)/outputs.tf
+#       displayName: 'Create Terraform Files'
+
+#   - job: Terraform
+#     displayName: 'Provision EC2 with Terraform'
+#     dependsOn: CopyTerraformFiles
+#     steps:
+#     - script: |
+#         wget https://golang.org/dl/go1.17.6.linux-amd64.tar.gz
+#         sudo tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz
+#         export PATH=$PATH:/usr/local/go/bin
+#         go version
+#       displayName: 'Install Go'
+
+#     - task: UseTerraform@0
+#       inputs:
+#         command: 'init'
+#         workingDirectory: '$(TERRAFORM_WORKING_DIRECTORY)'
+
+#     - task: UseTerraform@0
+#       inputs:
+#         command: 'apply'
+#         workingDirectory: '$(TERRAFORM_WORKING_DIRECTORY)'
+#         additionalArgs: '-auto-approve'
+
+#     - publish: $(TERRAFORM_WORKING_DIRECTORY)/ip_address.txt
+#       artifact: EC2IPAddress
+#       displayName: 'Publish EC2 IP Address'
+
+# - stage: Deploy
+#   displayName: 'Deploy and Run'
+#   dependsOn: Provision
+#   jobs:
+#   - job: Deploy
+#     displayName: 'Deploy Go Web App'
+#     steps:
+#     - download: EC2IPAddress
+#       displayName: 'Download EC2 IP Address'
+
+#     - download: current
+#       artifact: go-webapp-sample
+#       displayName: 'Download Built Go App'
+
+#     - task: UseSSH@0
+#       inputs:
+#         sshEndpoint: 'EC2-SSH' # Configure your EC2 SSH service connection in Azure DevOps
+#         runOptions: 'commands'
+#         commands: |
+#           scp -i /path/to/your/private/key.pem $(Pipeline.Workspace)/go-webapp-sample/go-webapp-sample ec2-user@$(cat $(Pipeline.Workspace)/EC2IPAddress/ip_address.txt):~/go-webapp/
+#           ssh -i /path/to/your/private/key.pem ec2-user@$(cat $(Pipeline.Workspace)/EC2IPAddress/ip_address.txt) "cd ~/go-webapp && ./go-webapp-sample &"
+#       displayName: 'Deploy and Run Go Web App'
