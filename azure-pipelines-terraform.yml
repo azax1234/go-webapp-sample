@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  GO111MODULE: 'on'
+  GOBIN: '$(GOPATH)/bin'
+  TERRAFORM_WORKING_DIRECTORY: '$(Build.SourcesDirectory)/terraform'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    displayName: 'Build Go Web App'
+    steps:
+    - task: UseGoTool@0
+      inputs:
+        version: '1.17.x' # Specify the Go version you need
+
+    - script: |
+        mkdir -p $(GOPATH)/src/github.com/azax1234
+        cd $(GOPATH)/src/github.com/azax1234
+        git clone https://github.com/azax1234/go-webapp-sample
+        cd go-webapp-sample
+        go build -o go-webapp-sample
+        mkdir -p $(Build.ArtifactStagingDirectory)
+        cp go-webapp-sample $(Build.ArtifactStagingDirectory)
+        echo "display the working dir: $(Build.ArtifactStagingDirectory)""
+      displayName: 'Build Go App'
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: go-webapp-sample
+      displayName: 'Publish Artifact'
