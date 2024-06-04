@@ -31,6 +31,7 @@ stages:
         /usr/local/go/bin/go build -o go-webapp-sample
         mkdir -p $(Build.ArtifactStagingDirectory)
         cp go-webapp-sample $(Build.ArtifactStagingDirectory)
+        echo "Working dir is  $(Build.ArtifactStagingDirectory)"
       displayName: 'Build Go App'
 
     - publish: $(Build.ArtifactStagingDirectory)
